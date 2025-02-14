@@ -1,6 +1,31 @@
-# 使用 Miniconda 作为基础镜像
-FROM continuumio/miniconda3:latest
+# 使用 Ubuntu 作为基础镜像
+FROM ubuntu:latest
 
+# 设置环境变量，确保系统能找到非交互的 apt 配置
+ENV DEBIAN_FRONTEND=noninteractive
+# 更新系统并安装必要的工具
+RUN apt-get update -y && apt-get install -y \
+    curl \
+    wget \
+    bzip2 \
+    ca-certificates \
+    libgl1 \
+    mesa-utils \ 
+    libglib2.0-0 \
+    git \
+    python3 \
+    python3-pip \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/
+# 使用 Tsinghua 的镜像下载 Miniconda
+RUN wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
+    && bash miniconda.sh -b -p /opt/conda \
+    && rm miniconda.sh
+
+
+# 设置 Conda 环境变量
+ENV PATH=/opt/conda/bin:$PATH
+    
 # 设置工作目录
 WORKDIR /workspace
 
@@ -25,6 +50,6 @@ RUN conda create -y -n lerobot python=3.10
 # 初始化 Conda 环境并安装 LeRobot
 RUN /opt/conda/bin/conda init bash
 
-# 设置默认命令使用 conda run 启动 bash shell
-CMD ["/opt/conda/bin/conda", "run", "-n", "lerobot", "bash"]
+# 设置默认命令启动 Conda 环境并进入 Bash，保持容器运行
+CMD ["/bin/bash", "-c", "source activate lerobot && exec bash"]
 
